@@ -39,6 +39,16 @@
        (apply concat) ; apply str would not work, as it does not return a lazy seq but tries to consume all inputs
        (take length)))
 
+(defn unpad-key [padded-key]
+  (->> (count padded-key)
+       (range 1) ; all possible key lengths
+       (map #(->> (partition % padded-key)
+                  doall
+                  (map (fn [c] (apply str c)))))
+       (filter #(= (first %) (second %)))
+       last ; last = problem for scones (sconesscones), first is problem for abcabcx (abc)
+       first))
+
 (defn encode [keyword message]
   (let [padded-key (pad-key keyword (count message))]
     (->> (map encode-char padded-key message)
@@ -51,5 +61,6 @@
          (apply str))))
 
 (defn decipher [cipher message]
-  "decypherme")
-
+  (->
+   (decode message cipher) ; e.g. sconessconesscon
+   unpad-key))
